@@ -1,6 +1,7 @@
 package com.github.gfx.ribbonizer.plugin;
 
 import com.android.build.gradle.api.ApplicationVariant;
+import com.github.gfx.ribbonizer.CustomColorRibbonBuilder;
 import com.github.gfx.ribbonizer.FilterBuilder;
 import com.github.gfx.ribbonizer.GrayScaleBuilder;
 import com.github.gfx.ribbonizer.GrayRibbonBuilder;
@@ -20,6 +21,8 @@ import java.util.function.Consumer;
 class RibbonizerExtension {
 
     public static String NAME = "ribbonizer";
+
+    Set<String> forcedVariantsNames = new HashSet<>();
 
     Set<String> iconNames = new HashSet<>();
 
@@ -60,6 +63,14 @@ class RibbonizerExtension {
         iconNames.add(resName);
     }
 
+    public Set<String> getForcedVariantsNames() {
+        return forcedVariantsNames;
+    }
+
+    public void forcedVariantsNames(String... variantsNames) {
+        forcedVariantsNames = new HashSet<>(Arrays.asList(variantsNames));
+    }
+
     public List<FilterBuilder> getFilterBuilders() {
         return filterBuilders;
     }
@@ -90,5 +101,9 @@ class RibbonizerExtension {
 
     public Consumer<BufferedImage> greenRibbonFilter(ApplicationVariant variant, File iconFile) {
         return new GreenRibbonBuilder().apply(variant, iconFile);
+    }
+
+    public Consumer<BufferedImage> customColorRibbonFilter(ApplicationVariant variant, File iconFile, String nm) {
+        return new CustomColorRibbonBuilder(nm).apply(variant, iconFile);
     }
 }

@@ -53,6 +53,7 @@ class RibbonizerTask extends DefaultTask {
                 project.fileTree(
                         dir: resDir,
                         include: Resources.resourceFilePattern(name),
+                        exclude: "**/*.xml",
                 ).forEach { File inputFile ->
                     info "process $inputFile"
 
@@ -86,7 +87,7 @@ class RibbonizerTask extends DefaultTask {
     Set<String> getLauncherIconNames() {
         def names = new HashSet<String>()
         androidManifestFiles.forEach { File manifestFile ->
-            names.add(Resources.getLauncherIcon(manifestFile))
+            names.addAll(Resources.getLauncherIcons(manifestFile))
         }
         return names
     }

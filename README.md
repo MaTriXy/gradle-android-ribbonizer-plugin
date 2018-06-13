@@ -1,4 +1,6 @@
-# Ribbonizer plugin for Android [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.github.gfx.ribbonizer/plugin/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.github.gfx.ribbonizer/plugin) [![Circle CI](https://circleci.com/gh/gfx/gradle-android-ribbonizer-plugin.svg?style=svg&branch=master)](https://circleci.com/gh/gfx/gradle-android-ribbonizer-plugin)
+# Ribbonizer plugin for Android
+
+[![Circle CI](https://circleci.com/gh/gfx/gradle-android-ribbonizer-plugin.svg?style=svg&branch=master)](https://circleci.com/gh/gfx/gradle-android-ribbonizer-plugin) [![Download](https://api.bintray.com/packages/gfx/maven/ribbonizer-plugin/images/download.svg)](https://bintray.com/gfx/maven/ribbonizer-plugin/_latestVersion)
 
 This is a ribbonizer as a Gradle plugin for Android, which adds a ribbon to launcher icons.
 
@@ -13,8 +15,8 @@ buildscript {
         jcenter()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:1.5.0'
-        classpath 'com.github.gfx.ribbonizer:plugin:0.5.0'
+        classpath 'com.android.tools.build:gradle:2.1.2'
+        classpath 'com.github.gfx.ribbonizer:ribbonizer-plugin:2.1.0'
     }
 }
 ```
@@ -27,15 +29,22 @@ android {
     // ...
 
     buildTypes {
-        debug {}
+        debug {/*debuggable build, which will ribbonized automatically*/}
         beta {
+            //debuggable build which will automatically ribbonized.
             debuggable true
         }
-        release {}
+        canary {
+            //non-debuggable build which will no automatically ribbonized.
+            //But, we force one of its flavors. See `ribbonizer` for how-to
+            debuggable false
+        }
+        release {/*non-debuggable build. Will not be rebbonized automatically*/}
     }
 
     productFlavors {
         local {}
+        qa {}
         staging {}
         production {}
     }
@@ -49,12 +58,32 @@ ribbonizer {
         // change ribbon colors by product flavors
         if (variant.flavorName == "local") {
             return grayRibbonFilter(variant, iconFile)
+        } else if (variant.flavorName == "qa") {
+            // customColorRibbonFilter allows setting any color code
+            def filter = customColorRibbonFilter(variant, iconFile, "#00C89C")
+            // Finer control of the label text can be achieved by setting it manually, or set to
+            // null for an unlabelled ribbon. The default is to use the flavor name.
+            filter.label = "QA" + variant.versionCode
+            return filter
         } else if (variant.flavorName == "staging") {
             return yellowRibbonFilter(variant, iconFile)
+        } else if (variant.buildType.name == "debug") {
+            if (variant.flavorName == "production") {
+                // Particular configurations can be skipped by returning no filters
+                return null
+            }
+            else {
+                // Other filters can be applied, as long as they implement Consumer<BufferedImage>
+                return grayScaleFilter(variant, iconFile)
+            }
         } else {
             return greenRibbonFilter(variant, iconFile)
         }
     }
+
+    //Although `canary` build-type is marked as `non-debuggable`
+    //we can still force specific variants to be ribbonized:
+    forcedVariantsNames "localCanary"
 }
 
 ```
@@ -69,6 +98,14 @@ buildSrc/ - A helper module to use this plugin in example modules
 ```
 
 You can test this project with `./gradlew check`.
+
+## Release Engineering
+
+```console
+./gradlew bumpMinor # or bumpMajor, bumpPatch
+
+make publish # upload artifacts to bintray jcenter
+```
 
 ## Author And License
 
